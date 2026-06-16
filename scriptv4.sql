@@ -44,6 +44,7 @@ CREATE TABLE produto (
     margem_lucro DECIMAL(10,2),
     unidade_producao VARCHAR(45),
     status TINYINT NOT NULL DEFAULT 1,
+    quantidade_produzida INT,
     descricao VARCHAR(245),
 
     CONSTRAINT fk_produto_categoria
@@ -72,6 +73,7 @@ CREATE TABLE insumo (
     quantidade_atual DECIMAL(10,3) NOT NULL DEFAULT 0,
     quantidade_minima DECIMAL(10,3) NOT NULL DEFAULT 0,
     unidade VARCHAR(45) NOT NULL,
+    custo_unitario DECIMAL(4,2),
     status TINYINT NOT NULL DEFAULT 1,
     marca VARCHAR(45),
 
@@ -100,6 +102,7 @@ CREATE TABLE pedido (
     endereco_entrega VARCHAR(225),
     data_criacao DATE NOT NULL,
     data_entrega DATE,
+    margem_lucro DECIMAL(4,2),
     anotacao VARCHAR(245),
 
     CONSTRAINT fk_pedido_cliente
@@ -116,6 +119,7 @@ CREATE TABLE pagamento (
     valor_sinal DECIMAL(10,2) NOT NULL,
     valor_restante DECIMAL(10,2) NOT NULL,
     status_pagamento VARCHAR(245) NOT NULL,
+    forma_pagamento VARCHAR(245),
 
     CONSTRAINT fk_pagamento_pedido
         FOREIGN KEY (fk_pedido)
@@ -257,22 +261,22 @@ INSERT INTO cliente (nome, telefone, endereco, tipo_cliente, observacao) VALUES
 
 INSERT INTO produto (
     fk_categoria_produto, nome, custo_estimado, preco_atual, preco_sugerido,
-    margem_lucro, unidade_producao, status, descricao
+    margem_lucro, unidade_producao, status, quantidade_produzida, descricao
 ) VALUES
-(1, 'Bolo de Chocolate', 35.00, 85.00, 90.00, 58.76, 'unidade', 1, 'Bolo de chocolate com cobertura de brigadeiro'),
-(2, 'Brigadeiro Gourmet', 1.20, 3.50, 4.00, 65.71, 'unidade', 1, 'Brigadeiro tradicional enrolado com granulado belga'),
-(3, 'Torta de Morango', 28.00, 70.00, 75.00, 60.00, 'unidade', 1, 'Torta com creme e morangos frescos');
+(1, 'Bolo de Chocolate', 35.00, 85.00, 90.00, 58.76, 'unidade', 1, 10, 'Bolo de chocolate com cobertura de brigadeiro'),
+(2, 'Brigadeiro Gourmet', 1.20, 3.50, 4.00, 65.71, 'unidade', 1, 200, 'Brigadeiro tradicional enrolado com granulado belga'),
+(3, 'Torta de Morango', 28.00, 70.00, 75.00, 60.00, 'unidade', 1, 8, 'Torta com creme e morangos frescos');
 
 INSERT INTO insumo (
     fk_categoria_insumo, nome, quantidade_atual, quantidade_minima,
-    unidade, status, marca
+    unidade, custo_unitario, status, marca
 ) VALUES
-(1, 'Farinha de trigo', 5.000, 1.000, 'kg', 1, 'Dona Benta'),
-(1, 'Chocolate em pó', 2.000, 0.500, 'kg', 1, 'Nestlé'),
-(2, 'Leite condensado', 20.000, 5.000, 'unidade', 1, 'Moça'),
-(2, 'Creme de leite', 10.000, 2.000, 'litro', 1, 'Italac'),
-(3, 'Morango', 8.000, 2.000, 'kg', 1, 'Hortifruti Premium'),
-(1, 'Granulado belga', 1.500, 0.300, 'kg', 1, 'Callebaut');
+(1, 'Farinha de trigo', 5.000, 1.000, 'kg', 6.50, 1, 'Dona Benta'),
+(1, 'Chocolate em pó', 2.000, 0.500, 'kg', 22.00, 1, 'Nestlé'),
+(2, 'Leite condensado', 20.000, 5.000, 'unidade', 6.00, 1, 'Moça'),
+(2, 'Creme de leite', 10.000, 2.000, 'litro', 12.00, 1, 'Italac'),
+(3, 'Morango', 8.000, 2.000, 'kg', 18.00, 1, 'Hortifruti Premium'),
+(1, 'Granulado belga', 1.500, 0.300, 'kg', 35.00, 1, 'Callebaut');
 
 INSERT INTO produto_insumo (fk_produto, fk_insumo, quantidade_utilizada, unidade) VALUES
 (1, 1, 0.500, 'kg'),
@@ -285,18 +289,18 @@ INSERT INTO produto_insumo (fk_produto, fk_insumo, quantidade_utilizada, unidade
 
 INSERT INTO pedido (
     fk_cliente, tipo_pedido, status_pedido, forma_entrega,
-    endereco_entrega, data_criacao, data_entrega, anotacao
+    endereco_entrega, data_criacao, data_entrega, margem_lucro, anotacao
 ) VALUES
-(1, 'pedido', 'aguardando_sinal', 'entrega', 'Rua das Flores, 120', '2026-03-20', '2026-03-21', 'Pedido para festa de aniversário'),
-(2, 'pedido', 'em_producao', 'retirada', NULL, '2026-03-21', '2026-03-22', 'Cliente pediu confirmação antes da retirada'),
-(3, 'orcamento', 'orcamento', 'entrega', 'Rua dos Doces, 89', '2026-03-22', '2026-03-25', 'Aguardando retorno do cliente');
+(1, 'pedido', 'aguardando_sinal', 'entrega', 'Rua das Flores, 120', '2026-03-20', '2026-03-21', 58.76, 'Pedido para festa de aniversário'),
+(2, 'pedido', 'em_producao', 'retirada', NULL, '2026-03-21', '2026-03-22', 60.00, 'Cliente pediu confirmação antes da retirada'),
+(3, 'orcamento', 'orcamento', 'entrega', 'Rua dos Doces, 89', '2026-03-22', '2026-03-25', 65.71, 'Aguardando retorno do cliente');
 
 INSERT INTO pagamento (
-    fk_pedido, valor_total, valor_sinal, valor_restante, status_pagamento
+    fk_pedido, valor_total, valor_sinal, valor_restante, status_pagamento, forma_pagamento
 ) VALUES
-(1, 155.00, 77.50, 77.50, 'aguardando_sinal'),
-(2, 70.00, 35.00, 35.00, 'sinal_pago'),
-(3, 220.00, 110.00, 110.00, 'aguardando_sinal');
+(1, 155.00, 77.50, 77.50, 'aguardando_sinal', 'pix'),
+(2, 70.00, 35.00, 35.00, 'sinal_pago', 'cartao'),
+(3, 220.00, 110.00, 110.00, 'aguardando_sinal', 'pix');
 
 INSERT INTO item_pedido (
     fk_produto, fk_pedido, quantidade, valor_unitario, valor_total, observacao
