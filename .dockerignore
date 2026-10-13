@@ -1,0 +1,11 @@
+*.mwb
+*.mwb.bak
+*.png
+
+.git
+.gitignore
+.github
+
+Dockerfile
+.dockerignore
+README.md
