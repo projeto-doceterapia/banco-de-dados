@@ -1,36 +1,36 @@
 # banco-de-dados
 
-Target MySQL 8 schema for Doceterapia.
+Schema MySQL 8 alvo para a Doceterapia.
 
-- `scriptv4.sql`: full schema (`DROP`/`CREATE DATABASE doce_terapia`), demonstrative
-  seed data, the stock-ledger backfill, and the main report queries. It is aligned
-  with the back-end JPA entities: the entity is the source of truth and the script
-  follows it. The back-end runs with `ddl-auto=validate` against a database built
-  from this script.
-- `modelagemv4.mwb`: MySQL Workbench model. Edited only inside Workbench.
+- `scriptv4.sql`: schema completo (`DROP`/`CREATE DATABASE doce_terapia`), dados de
+  seed demonstrativos, o backfill do livro-razão de estoque e as principais queries de
+  relatório. Está alinhado com as entidades JPA do back-end: a entidade é a fonte da
+  verdade e o script a segue. O back-end roda com `ddl-auto=validate` contra um banco
+  construído a partir deste script.
+- `modelagemv4.mwb`: modelo do MySQL Workbench. Editado somente dentro do Workbench.
 
-## Stock ledger and initial data loads
+## Livro-razão de estoque e cargas iniciais de dados
 
-The stock balance (`insumo.quantidade_atual`) is a cache. The real balance is the
-sum of `movimentacao_estoque` rows for each supply, and only the movement service
-writes the cache, in the same transaction.
+O saldo de estoque (`insumo.quantidade_atual`) é um cache. O saldo real é a soma das
+linhas de `movimentacao_estoque` de cada insumo, e apenas o serviço de movimentação
+escreve o cache, na mesma transação.
 
-Because of that, **any future initial data load must create stock through movements,
-or run the `SALDO_INICIAL` backfill right after loading**. The backfill block in
-`scriptv4.sql` inserts one `SALDO_INICIAL` movement per supply with a non-zero balance,
-so that `SUM(movimentacao_estoque.quantidade) = insumo.quantidade_atual` for every
-supply. It is idempotent: it skips supplies that already have a `SALDO_INICIAL`
-movement, so it is safe to run again after loading more data.
+Por isso, **toda carga inicial de dados futura deve criar estoque por meio de
+movimentações, ou rodar o backfill de `SALDO_INICIAL` logo após a carga**. O bloco de
+backfill em `scriptv4.sql` insere uma movimentação `SALDO_INICIAL` por insumo com saldo
+diferente de zero, de modo que `SUM(movimentacao_estoque.quantidade) = insumo.quantidade_atual`
+para cada insumo. Ele é idempotente: pula os insumos que já possuem uma movimentação
+`SALDO_INICIAL`, então é seguro rodá-lo novamente após carregar mais dados.
 
-If a data load writes `insumo.quantidade_atual` directly without a matching movement,
-the ledger and the cache will disagree until the backfill is run.
+Se uma carga de dados escrever `insumo.quantidade_atual` diretamente sem uma movimentação
+correspondente, o livro-razão e o cache ficarão divergentes até que o backfill seja rodado.
 
-The backfill's idempotency is logical, enforced by the `NOT EXISTS` check, not by the
-unique key: `movimentacao_estoque.chave_idempotencia` is NULL for `SALDO_INICIAL` rows,
-and MySQL unique keys ignore NULLs, so running the block twice relies on `NOT EXISTS`
-to avoid duplicates. A supply with a NULL `quantidade_atual` is treated as balance 0, so
-no supply is silently skipped.
+A idempotência do backfill é lógica, garantida pela verificação `NOT EXISTS`, não pela
+chave única: `movimentacao_estoque.chave_idempotencia` é NULL para as linhas `SALDO_INICIAL`,
+e as chaves únicas do MySQL ignoram NULLs, então rodar o bloco duas vezes depende do `NOT EXISTS`
+para evitar duplicatas. Um insumo com `quantidade_atual` NULL é tratado como saldo 0, de modo
+que nenhum insumo é pulado silenciosamente.
 
-## Credentials
+## Credenciais
 
-`usuario.senha` must store only a password hash, never a plaintext password.
+`usuario.senha` deve armazenar apenas um hash de senha, nunca uma senha em texto puro.
