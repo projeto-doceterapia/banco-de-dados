@@ -1,13 +1,29 @@
 # banco-de-dados
 
-Schema MySQL 8 alvo para a Doceterapia.
+Imagem MySQL 8.4 da Doceterapia.
 
-- `scriptv4.sql`: schema completo (`DROP`/`CREATE DATABASE doce_terapia`), dados de
-  seed demonstrativos, o backfill do livro-razão de estoque e as principais queries de
-  relatório. Está alinhado com as entidades JPA do back-end: a entidade é a fonte da
-  verdade e o script a segue. O back-end roda com `ddl-auto=validate` contra um banco
-  construído a partir deste script.
-- `modelagemv4.mwb`: modelo do MySQL Workbench. Editado somente dentro do Workbench.
+O banco nasce vazio: a imagem cria apenas o banco de `MYSQL_DATABASE` e o usuário de
+`MYSQL_USER`, sem nenhum script de inicialização. Quem cria o schema é o back-end, com as
+migrações Flyway, na primeira subida.
+
+## Volume existente
+
+Um volume criado por uma versão anterior da imagem já tem as tabelas do `scriptv4.sql`, mas
+não tem o histórico do Flyway. O back-end recusa a subida com um erro de schema não vazio. O
+mesmo acontece, por checksum, quando a migração já aplicada é editada. Nos dois casos, recrie
+o volume (por exemplo, `docker compose down -v`), o que apaga todos os dados dele.
+
+Publique o back-end com o Flyway antes desta imagem: o back-end anterior só valida o schema e
+não sobe sobre um banco vazio.
+
+## Arquivos históricos
+
+Estes arquivos ficam só como histórico. Não são a fonte do schema, não entram na imagem e não
+são mais atualizados:
+
+- `scriptv4.sql`: schema (`DROP`/`CREATE DATABASE doce_terapia`), dados de seed demonstrativos,
+  o backfill do livro-razão de estoque e as principais queries de relatório.
+- `modelagemv4.mwb`: modelo do MySQL Workbench.
 
 ## Livro-razão de estoque e cargas iniciais de dados
 
